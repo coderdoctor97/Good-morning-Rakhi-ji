@@ -42,7 +42,7 @@ body{
 }
 .ph-dawn .sky-dawn{opacity:1}
 .ph-morning .sky-day{opacity:1}
-.vignette{inset:0;pointer-events:none;opacity:.85;transition:opacity 5s ease .5s;
+.vignette{inset:0;pointer-events:none;opacity:.85;transition:opacity 5s ease .5s;will-change:opacity;
   background:radial-gradient(135% 100% at 50% 38%, transparent 55%, rgba(0,0,10,.42) 100%)}
 .ph-dawn .vignette{opacity:0}
 
@@ -57,7 +57,8 @@ body{
 .horizon-glow{left:58%;top:79%;width:185vw;height:112vh;pointer-events:none;
   transform:translate(-50%,-50%) scale(.62);opacity:0;
   background:radial-gradient(closest-side, rgba(255,178,110,.55), rgba(255,148,108,.16) 46%, transparent 72%);
-  transition:opacity 5s ease 1.2s, transform 9s cubic-bezier(.2,.6,.2,1) 1.2s}
+  transition:opacity 5s ease 1.2s, transform 9s cubic-bezier(.2,.6,.2,1) 1.2s;
+  will-change:opacity,transform}
 .ph-dawn .horizon-glow{opacity:.9;transform:translate(-50%,-50%) scale(1)}
 .ph-morning .horizon-glow{opacity:.7}
 
@@ -72,20 +73,20 @@ body{
 @keyframes halo{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.06);opacity:1}}
 .sun-svg{position:absolute;inset:0;width:100%;height:100%}
 
-.cloud{pointer-events:none;border-radius:50%;opacity:0;transition:opacity 6s ease 1s;
+.cloud{pointer-events:none;border-radius:50%;opacity:0;transition:opacity 6s ease 1s;will-change:transform,opacity;
   background:radial-gradient(closest-side, rgba(255,252,246,.78), rgba(255,252,246,0))}
 .ph-morning .cloud{opacity:var(--co,.4)}
 .c1{top:15%;left:5%;width:46vw;height:9vh;--co:.36;animation:drift 72s ease-in-out infinite alternate}
 .c2{top:8%;right:3%;width:34vw;height:7vh;--co:.30;animation:drift 92s ease-in-out infinite alternate-reverse}
 .c3{top:31%;right:11%;width:24vw;height:6vh;--co:.20;animation:drift 82s ease-in-out infinite alternate}
-@keyframes drift{from{transform:translateX(-2.4vw)}to{transform:translateX(2.4vw)}}
+@keyframes drift{from{transform:translate3d(-2.4vw,0,0)}to{transform:translate3d(2.4vw,0,0)}}
 
 /* ============ hills & haze ============ */
 .hills{left:0;right:0;bottom:0;height:24vh;pointer-events:none}
 .hills svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.hills-warm{opacity:0;transition:opacity 5.5s ease 1.5s}
+.hills-warm{opacity:0;transition:opacity 5.5s ease 1.5s;will-change:opacity}
 .ph-morning .hills-warm{opacity:.94}
-.haze{left:0;right:0;bottom:0;height:30vh;pointer-events:none;opacity:0;transition:opacity 6s ease 2s;
+.haze{left:0;right:0;bottom:0;height:30vh;pointer-events:none;opacity:0;transition:opacity 6s ease 2s;will-change:opacity;
   background:linear-gradient(180deg, rgba(255,240,220,0), rgba(255,236,210,.55) 78%, rgba(255,236,210,.66))}
 .ph-morning .haze{opacity:.5}
 
@@ -124,12 +125,12 @@ body{
   background:radial-gradient(circle, rgba(255,226,232,.95), rgba(255,178,192,.28) 30%, transparent 60%)}
 
 /* ============ birds ============ */
-.birds{inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 2s ease}
+.birds{inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 2s ease;will-change:opacity}
 .birds.on{opacity:1}
 .bird-track{animation:fly var(--fdur,14s) cubic-bezier(.42,.1,.48,1) var(--fdel,0s) both;
   animation-play-state:paused;will-change:transform}
 .birds.on .bird-track{animation-play-state:running}
-@keyframes fly{from{transform:translateX(var(--x0,-80px))}to{transform:translateX(var(--x1,480px))}}
+@keyframes fly{from{transform:translate3d(var(--x0,-80px),0,0)}to{transform:translate3d(var(--x1,480px),0,0)}}
 .birds.on .bird-bob{animation:bob var(--bd,3s) ease-in-out var(--bdel,0s) infinite alternate}
 @keyframes bob{from{transform:translateY(-4px)}to{transform:translateY(4px)}}
 .bird-wing{fill:none;stroke:rgba(43,42,56,.82);stroke-width:1.7;stroke-linecap:round;
@@ -149,11 +150,11 @@ body{
   width:min(86vw,520px);pointer-events:none}
 .m-title{display:flex;flex-direction:column;align-items:center;font-weight:300}
 .m-label{display:block;font-size:clamp(10px,2.8vw,13px);letter-spacing:.42em;text-transform:uppercase;
-  color:#7c5c4e;padding-left:.42em;opacity:0;transform:translateY(14px);filter:blur(5px);
+  color:#7c5c4e;padding-left:.42em;opacity:0;transform:translateY(14px);filter:blur(5px);will-change:opacity,transform,filter;
   transition:opacity 1.9s ease .25s, transform 1.9s cubic-bezier(.2,.6,.2,1) .25s, filter 1.9s ease .25s}
 .m-name{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
   font-size:clamp(44px,12.5vw,64px);line-height:1.05;color:#4a323e;margin-top:14px;
-  opacity:0;transform:translateY(16px);filter:blur(7px);
+  opacity:0;transform:translateY(16px);filter:blur(7px);will-change:opacity,transform,filter;
   transition:opacity 2.3s ease .7s, transform 2.3s cubic-bezier(.2,.6,.2,1) .7s, filter 2.3s ease .7s}
 .m-divider{display:block;margin:18px auto 0;width:50px;opacity:0;transition:opacity 1.2s ease 1.6s}
 .m-divider path{fill:none;stroke:#b25a70;stroke-width:1.7;stroke-linecap:round;
@@ -633,12 +634,16 @@ document.addEventListener("visibilitychange", () => {
 /* ---------- pointer proximity (mouse only) ---------- */
 const parallax = $("heartParallax");
 if (matchMedia("(pointer:fine)").matches && !REDUCED) {
-  let px = 0, py = 0, tx = 0, ty = 0, rafId = null;
-  const loop = () => { rafId = requestAnimationFrame(() => {
-    px += (tx - px) * 0.06; py += (ty - py) * 0.06;
-    parallax.style.transform = `translate(${px.toFixed(2)}px, ${py.toFixed(2)}px)`;
-    if (Math.abs(tx - px) > 0.05 || Math.abs(ty - py) > 0.05) loop(); else rafId = null;
-  }); };
+  let px = 0, py = 0, tx = 0, ty = 0, rafId = null, lastT = 0;
+  const loop = now => { rafId = requestAnimationFrame(loop);
+    const dt = lastT ? Math.min(64, now - lastT) : 16.7;
+    lastT = now;
+    const k = 1 - Math.exp(-dt / 260);
+    px += (tx - px) * k; py += (ty - py) * k;
+    parallax.style.transform = `translate3d(${px.toFixed(2)}px, ${py.toFixed(2)}px, 0)`;
+    if (Math.abs(tx - px) > 0.05 || Math.abs(ty - py) > 0.05) return;
+    cancelAnimationFrame(rafId); rafId = null; lastT = 0;
+  };
   addEventListener("pointermove", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
     if (started) { tx = 0; ty = 0; }
