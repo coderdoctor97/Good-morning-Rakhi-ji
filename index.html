@@ -17,6 +17,7 @@ body{
   height:100vh;height:100dvh;overflow:hidden;
   background:#04060f;color:#e8e6ee;
   font-family:'Jost',system-ui,sans-serif;font-weight:300;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
   touch-action:none;overscroll-behavior:none;
   user-select:none;-webkit-user-select:none;
   -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
@@ -37,6 +38,7 @@ body{
   linear-gradient(180deg,#141634 0%,#34295b 28%,#6d3e64 54%,#b26169 74%,#e6976c 90%,#f8bf86 100%);
 }
 .sky-day{opacity:0;transition:opacity 6.5s ease;background:
+  linear-gradient(180deg, rgba(255,255,255,.18) 0%, transparent 22%),
   radial-gradient(100% 42% at 50% 103%, rgba(255,215,150,.55), transparent 60%),
   linear-gradient(180deg,#9bc7de 0%,#bcdce8 32%,#e9e7d8 60%,#f9ecd4 80%,#ffe2b0 100%);
 }
@@ -45,6 +47,12 @@ body{
 .vignette{inset:0;pointer-events:none;opacity:.85;transition:opacity 5s ease .5s;will-change:opacity;
   background:radial-gradient(135% 100% at 50% 38%, transparent 55%, rgba(0,0,10,.42) 100%)}
 .ph-dawn .vignette{opacity:0}
+
+/* film grain — static tile, one composite layer, no repaint */
+.grain{inset:0;pointer-events:none;z-index:5;opacity:.05;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:160px 160px}
+.ph-morning .grain{opacity:.035}
 
 /* ============ stars & meteors ============ */
 .stars,.meteors{inset:0;width:100%;height:100%;pointer-events:none;transition:opacity 3.6s ease .15s}
@@ -96,15 +104,17 @@ body{
   transition:transform 3.9s cubic-bezier(.45,.1,.2,1), opacity 3.4s ease .3s}
 .ph-dawn .heart-anchor{transform:translate(-50%,-50%) translateY(-30vh) scale(.86);opacity:0}
 .heart-parallax{position:absolute;inset:0;will-change:transform}
-.heart-glow{position:absolute;inset:-46%;pointer-events:none;will-change:transform,opacity;
+.heart-glow{position:absolute;inset:-46%;pointer-events:none;will-change:transform,opacity,filter;
   background:radial-gradient(circle, rgba(236,96,128,.42), rgba(236,96,128,.13) 46%, transparent 70%);
-  animation:glowbeat var(--beat) ease-in-out infinite}
+  animation:glowbeat var(--beat) ease-in-out infinite;transition:filter 220ms ease}
+.heart-anchor:has(.heart-hit:active) .heart-glow,.heart-anchor.is-pressing .heart-glow{filter:brightness(1.14)}
 @keyframes glowbeat{0%,30%,100%{transform:scale(1);opacity:.78}7%{transform:scale(1.05);opacity:1}13%{transform:scale(1);opacity:.85}19%{transform:scale(1.11);opacity:1}}
 .heart-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .float{animation:floaty 6.8s ease-in-out infinite;will-change:transform}
 @keyframes floaty{0%,100%{transform:translateY(0)}42%,58%{transform:translateY(-7px)}}
-.beat{transform-origin:100px 94px;animation:beat var(--beat) cubic-bezier(.45,.05,.35,1) infinite;will-change:transform}
+.beat{transform-origin:100px 94px;animation:beat var(--beat) cubic-bezier(.45,.05,.35,1) infinite;will-change:transform,filter;transition:filter 220ms ease}
 @keyframes beat{0%{transform:scale(1)}7%{transform:scale(1.045)}12%{transform:scale(.996)}19%{transform:scale(1.062)}30%{transform:scale(1)}100%{transform:scale(1)}}
+.heart-anchor:has(.heart-hit:active) .beat,.heart-anchor.is-pressing .beat{filter:brightness(1.08)}
 .ripple,.ripple-strong{fill:none;transform-box:fill-box;transform-origin:center;will-change:transform,opacity}
 .ripple{stroke:rgba(240,140,165,.5);stroke-width:1;opacity:0;
   animation:ripple 3.8s cubic-bezier(.2,.5,.35,1) infinite}
@@ -142,36 +152,48 @@ body{
 .cue{left:50%;top:calc(38% + clamp(86px,23vw,118px));transform:translate(-50%,0);
   font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;letter-spacing:.06em;
   color:rgba(216,224,248,.85);white-space:nowrap;opacity:0;pointer-events:none;
-  animation:cuein 2.4s cubic-bezier(.2,.6,.2,1) 3.4s forwards}
+  text-shadow:0 1px 14px rgba(6,8,20,.55);
+  animation:cuein 2.4s cubic-bezier(.2,.6,.2,1) 3.4s forwards,
+    cuebreathe 4.2s ease-in-out 7.6s infinite alternate}
 @keyframes cuein{from{opacity:0;transform:translate(-50%,10px)}to{opacity:.85;transform:translate(-50%,0)}}
+@keyframes cuebreathe{from{opacity:.85}to{opacity:.48}}
 .ph-touch .cue{animation:none;opacity:0;transition:opacity .8s ease}
 
 .message{left:50%;top:56%;transform:translate(-50%,-50%);text-align:center;
   width:min(86vw,520px);pointer-events:none}
 .m-title{display:flex;flex-direction:column;align-items:center;font-weight:300}
-.m-label{display:block;font-size:clamp(10px,2.8vw,13px);letter-spacing:.42em;text-transform:uppercase;
+.m-label{display:block;font-size:clamp(10px,2.8vw,13px);letter-spacing:.58em;text-transform:uppercase;
   color:#7c5c4e;padding-left:.42em;opacity:0;transform:translateY(14px);filter:blur(5px);will-change:opacity,transform,filter;
-  transition:opacity 1.9s ease .25s, transform 1.9s cubic-bezier(.2,.6,.2,1) .25s, filter 1.9s ease .25s}
+  font-variant-ligatures:common-ligatures;
+  transition:opacity 1.9s ease .25s, transform 1.9s cubic-bezier(.2,.6,.2,1) .25s, filter 1.9s ease .25s, letter-spacing 2.6s cubic-bezier(.2,.6,.2,1) .25s}
 .m-name{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
   font-size:clamp(44px,12.5vw,64px);line-height:1.05;color:#4a323e;margin-top:14px;
   opacity:0;transform:translateY(16px);filter:blur(7px);will-change:opacity,transform,filter;
+  text-wrap:balance;letter-spacing:-.015em;text-shadow:0 1px 20px rgba(74,50,62,.18);
+  font-variant-ligatures:common-ligatures;
   transition:opacity 2.3s ease .7s, transform 2.3s cubic-bezier(.2,.6,.2,1) .7s, filter 2.3s ease .7s}
 .m-divider{display:block;margin:18px auto 0;width:50px;opacity:0;transition:opacity 1.2s ease 1.6s}
 .m-divider path{fill:none;stroke:#b25a70;stroke-width:1.7;stroke-linecap:round;
+  filter:drop-shadow(0 1px 7px rgba(178,90,112,.35));
   stroke-dasharray:120;stroke-dashoffset:120;transition:stroke-dashoffset 1.6s cubic-bezier(.4,.1,.3,1) 1.8s}
 .ph-message .m-label,.ph-message .m-name{opacity:1;transform:translateY(0);filter:blur(0)}
+.ph-message .m-label{letter-spacing:.42em}
 .ph-message .m-divider{opacity:.9}
 .ph-message .m-divider path{stroke-dashoffset:0}
 
 /* ============ fullscreen control ============ */
 .fs-btn{top:calc(env(safe-area-inset-top,0px) + 12px);right:calc(env(safe-area-inset-right,0px) + 12px);
-  width:44px;height:44px;display:grid;place-items:center;background:transparent;border:0;padding:0;
-  color:rgba(226,232,252,.58);cursor:pointer;z-index:30;transition:color 2.5s ease}
+  width:44px;height:44px;display:grid;place-items:center;background:rgba(16,20,44,.20);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(226,232,255,.09);border:0;padding:0;
+  color:rgba(226,232,252,.62);cursor:pointer;z-index:30;
+  transition:color 2.5s ease, background-color 2.5s ease, box-shadow 2.5s ease}
 .fs-btn:hover{color:rgba(236,240,255,.95)}
 .fs-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .fs-btn:focus{outline:none}
 .fs-btn:focus-visible{outline:1.5px solid currentColor;outline-offset:2px;border-radius:8px}
-.ph-morning .fs-btn{color:rgba(74,50,62,.58)}
+.ph-morning .fs-btn{color:rgba(74,50,62,.60);background:rgba(255,252,246,.30);
+  box-shadow:inset 0 0 0 1px rgba(74,50,62,.10)}
 .ph-morning .fs-btn:hover{color:rgba(74,50,62,.92)}
 
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -196,7 +218,7 @@ body{
   .bird-track{animation-duration:46s!important;animation-timing-function:linear!important}
   .bird-bob,.bird-wing{animation:none!important}
   .m-label,.m-name{transform:none;filter:none}
-  .m-label{transition:opacity 1.6s ease .2s}
+  .m-label{letter-spacing:.42em;transition:opacity 1.6s ease .2s}
   .m-name{transition:opacity 1.8s ease .6s}
   .m-divider path{stroke-dasharray:none;stroke-dashoffset:0;transition:none}
   .hills-warm,.haze,.horizon-glow{transition-duration:3s}
@@ -210,6 +232,7 @@ body{
   <div class="sky sky-dawn" aria-hidden="true"></div>
   <div class="sky sky-day" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
 
   <svg class="stars" id="stars" aria-hidden="true"></svg>
   <svg class="meteors" id="meteors" aria-hidden="true"></svg>
@@ -221,9 +244,10 @@ body{
     <svg class="sun-svg" viewBox="0 0 100 100" aria-hidden="true">
       <defs>
         <radialGradient id="sunFill" cx="50%" cy="46%" r="60%">
-          <stop offset="0%" stop-color="#fff8e6"/>
-          <stop offset="55%" stop-color="#ffdda6"/>
-          <stop offset="100%" stop-color="#ffb369"/>
+          <stop offset="0%" stop-color="#fffdf4"/>
+          <stop offset="42%" stop-color="#ffedc4"/>
+          <stop offset="76%" stop-color="#ffd491"/>
+          <stop offset="100%" stop-color="#ffb267"/>
         </radialGradient>
       </defs>
       <circle cx="50" cy="50" r="22" fill="url(#sunFill)"/>
@@ -617,6 +641,12 @@ function runTransition() {
 hit.addEventListener("pointerdown", ignite);
 hit.addEventListener("click", ignite);
 hit.addEventListener("contextmenu", e => e.preventDefault());
+// premium press feedback — :has handles modern browsers, JS class is fallback for older
+const heartAnchorEl = $("heartAnchor");
+hit.addEventListener("pointerdown", () => heartAnchorEl.classList.add("is-pressing"));
+["pointerup","pointerleave","pointercancel","pointerout"].forEach(ev =>
+  hit.addEventListener(ev, () => heartAnchorEl.classList.remove("is-pressing")));
+addEventListener("pointerup", () => heartAnchorEl.classList.remove("is-pressing"), { passive: true });
 
 addEventListener("pointerdown", () => { if (!started) unlockAudio(false); }, { passive: true });
 
