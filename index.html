@@ -375,7 +375,7 @@ function scheduleMeteor(delay) {
 }
 
 /* ---------- audio core ---------- */
-let AC = null, master = null, heartGain = null, hbTimer = null, swellDone = false;
+let AC = null, master = null, heartGain = null, hbTimer = null;
 function ensureAudio() {
   if (!AC) {
     const C = window.AudioContext || window.webkitAudioContext;
@@ -436,65 +436,92 @@ function fadeHeartbeat() {
   }
   setTimeout(() => { if (hbTimer) { clearInterval(hbTimer); hbTimer = null; } }, 6300);
 }
-function morningSwell() {
-  if (!AC || swellDone) return; swellDone = true;
-  const t = AC.currentTime;
-  const buf = AC.createBuffer(1, 2 * AC.sampleRate, AC.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  const src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
-  const f = AC.createBiquadFilter(); f.type = "lowpass";
-  f.frequency.setValueAtTime(160, t); f.frequency.linearRampToValueAtTime(420, t + 6);
-  const g = AC.createGain();
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.linearRampToValueAtTime(0.035, t + 4.5);
-  g.gain.linearRampToValueAtTime(0.0001, t + 16);
-  src.connect(f); f.connect(g); g.connect(master);
-  src.start(t); src.stop(t + 16.5);
-}
+/* morning swell removed: assets/audio/morning-music.mp3 is the single music layer */
 
 /* ---------- music: audio file loader & player ---------- */
 let musicAudio = null;
+let musicUnlocked = false;
+let musicFadeTimer = null;
+let musicRetries = 0;
 
-function startMusic() {
+function ensureMusic() {
   if (musicAudio) return;
   try {
-    musicAudio = new Audio('assets/audio/morning-music.mp3');
+    musicAudio = new Audio();
+    musicAudio.src = 'assets/audio/morning-music.mp3';
     musicAudio.loop = true;
     musicAudio.preload = 'auto';
-    musicAudio.volume = 0;
-
-    const playPromise = musicAudio.play();
-    if (playPromise !== undefined) {
-      playPromise.then(() => {
-        const fadeIn = setInterval(() => {
-          if (!musicAudio) { clearInterval(fadeIn); return; }
-          if (musicAudio.volume < 0.85) {
-            musicAudio.volume = Math.min(0.85, musicAudio.volume + 0.03);
-          } else {
-            clearInterval(fadeIn);
-          }
-        }, 80);
-      }).catch(err => {
-        console.warn("Audio playback waiting for interaction:", err);
-      });
-    }
+    musicAudio.volume = 0.85;
+    document.body.appendChild(musicAudio);
+    musicAudio.addEventListener("error", () => {
+      console.warn("Music failed to load:", musicAudio.error);
+      if (musicRetries < 3 && !musicUnlocked) {
+        musicRetries++;
+        musicAudio.src = 'assets/audio/morning-music.mp3';
+        musicAudio.load();
+      }
+    });
   } catch (e) {
-    console.warn("Audio load error:", e);
+    console.warn("Music init error:", e);
+    musicAudio = null;
   }
 }
 
+function startMusic() {
+  ensureMusic();
+  if (!musicAudio || musicUnlocked) return;
+  let playPromise;
+  try {
+    playPromise = musicAudio.play();
+  } catch (e) {
+    console.warn("Music play error:", e);
+    return;
+  }
+  if (playPromise && playPromise.then) {
+    playPromise.then(() => {
+      musicUnlocked = true;
+      musicRetries = 0;
+      fadeMusicIn();
+    }).catch(err => {
+      // Mobile browsers (especially iOS Safari) reject play() when the call
+      // is not directly inside a user gesture. Keep the element ready and
+      // retry on the next interaction (touchend/pointerup/click below).
+      console.warn("Audio playback waiting for interaction:", err);
+    });
+  } else {
+    musicUnlocked = true;
+    fadeMusicIn();
+  }
+}
+
+function fadeMusicIn() {
+  clearInterval(musicFadeTimer);
+  // iOS Safari ignores HTMLMediaElement.volume (always reads 1), so on phones
+  // this fade is a no-op and the track just plays; on desktop it fades in.
+  let v = 0;
+  musicFadeTimer = setInterval(() => {
+    if (!musicAudio || musicAudio.paused) { clearInterval(musicFadeTimer); return; }
+    v = Math.min(0.85, v + 0.03);
+    musicAudio.volume = v;
+    if (v >= 0.85) clearInterval(musicFadeTimer);
+  }, 80);
+}
+
 function musicSwell() {
-  if (!musicAudio) return;
-  const target = Math.min(1.0, musicAudio.volume + 0.15);
+  if (!musicAudio || !musicUnlocked) return;
+  let v = musicAudio.volume;
+  const target = Math.min(1.0, v + 0.15);
   const swell = setInterval(() => {
     if (!musicAudio) { clearInterval(swell); return; }
-    if (musicAudio.volume < target) {
-      musicAudio.volume = Math.min(target, musicAudio.volume + 0.01);
-    } else {
-      clearInterval(swell);
-    }
+    v = Math.min(target, v + 0.01);
+    musicAudio.volume = v;
+    if (v >= target) clearInterval(swell);
   }, 60);
+}
+
+function resumeMusic() {
+  if (!musicAudio || !musicUnlocked) return;
+  if (musicAudio.paused) musicAudio.play().catch(() => {});
 }
 
 /* ---------- haptics ---------- */
@@ -549,7 +576,7 @@ function strongRipple() {
 }
 
 function ignite() {
-  if (started) return;
+  if (started) { startMusic(); return; }
   started = true;
   setPhase("touch");
   haptic([9, 90, 14]);
@@ -580,7 +607,6 @@ function runTransition() {
   const R = REDUCED;
   T(() => { setPhase("dawn"); setTheme("#241b42"); if (meteorTimer) clearTimeout(meteorTimer); }, R ? 150 : 380);
   T(() => sunWrap.classList.add("rise"), R ? 500 : 2300);
-  T(() => morningSwell(), R ? 800 : 3300);
   T(() => birdsSvg.classList.add("on"), R ? 1200 : 4400);
   T(() => { setPhase("morning"); setTheme("#ffe0b4"); }, R ? 1600 : 6400);
   T(() => { setPhase("message"); musicSwell(); liveMsg.textContent = "Good morning, Rakhi."; setTheme("#ffe6c0"); }, R ? 2600 : 9600);
@@ -592,6 +618,17 @@ hit.addEventListener("click", ignite);
 hit.addEventListener("contextmenu", e => e.preventDefault());
 
 addEventListener("pointerdown", () => { if (!started) unlockAudio(false); }, { passive: true });
+
+// Retry the music inside a real touch gesture: iOS Safari can reject play()
+// from pointerdown, while touchend/pointerup carry valid user activation.
+const retryMusic = () => { if (!musicUnlocked) startMusic(); };
+["pointerup", "touchend"].forEach(t => addEventListener(t, retryMusic, { passive: true }));
+
+// Mobile browsers pause HTML audio when the tab is backgrounded or the
+// screen locks; resume it when the user comes back.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) resumeMusic();
+});
 
 /* ---------- pointer proximity (mouse only) ---------- */
 const parallax = $("heartParallax");
